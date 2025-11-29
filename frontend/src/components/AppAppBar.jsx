@@ -163,7 +163,7 @@ export default function AppAppBar() {
               </Button>        
             ) : (
               <>
-                <span style={{ fontSize: 14, opacity: 0.8 }}>
+                <span style={{ fontSize: 14, color: '#000' }}>
                   Hi, {profile?.name?.split(" ")[0]} 👋
                 </span>
 

@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { dataDisplayCustomizations, feedbackCustomizations, inputsCustomizations, navigationCustomizations, surfacesCustomizations } from './customizations';
 import { colorSchemes, typography, shadows, shape } from './themePrimitives';
+import Box from '@mui/material/Box';
 
 function AppTheme(props) {
   const { children, disableCustomTheme, themeComponents } = props;
@@ -34,7 +35,35 @@ function AppTheme(props) {
   }
   return (
     <ThemeProvider theme={theme} disableTransitionOnChange>
+      <Box style={{ border: '1px solid transparent'}}
+      sx={{
+        minHeight: "100vh",
+        width: "100vw",
+        position: "relative",
+        overflow: "hidden",
+        backgroundImage: "url('/bg.jpg')",
+        backgroundSize: "cover",
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "center",
+
+        // ✨ SOFTEN the background
+        "&:before": {
+          content: '""',
+          position: "absolute",
+          inset: 0,
+          background: "rgba(255, 255, 255, 0.74)",
+          zIndex: 0
+        },
+
+        // Make children appear above overlay
+        "& > *": {
+          position: "relative",
+          zIndex: 1
+        }
+      }}
+    >
       {children}
+    </Box>
     </ThemeProvider>
   );
 }

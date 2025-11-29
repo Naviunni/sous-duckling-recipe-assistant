@@ -36,10 +36,6 @@ const StyledCard = styled(Card)(({ theme }) => ({
   padding: 0,
   height: '100%',
   backgroundColor: (theme.vars || theme).palette.background.paper,
-  '&:hover': {
-    backgroundColor: 'transparent',
-    cursor: 'pointer',
-  },
   '&:focus-visible': {
     outline: '3px solid',
     outlineColor: 'hsla(210, 98%, 48%, 0.5)',
@@ -81,7 +77,7 @@ export default function Home() {
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4, mt: 2 }}>
       <div>
         <Typography variant="h1" gutterBottom>
-          Cook smarter with <font color="#FF8A00">Sous Duckling</font>
+          Cook smarter with <font color="#e78310">Sous Duckling</font>
         </Typography>
         <Typography>I'm your tiny duckling sous-chef. Tell me what you're craving, and I'll fetch the perfect recipe, tweak the flavors, and guide you every step of the way. 💛</Typography>
       </div>

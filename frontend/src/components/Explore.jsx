@@ -79,7 +79,6 @@ const StyledCard = styled(Card)(({ theme }) => ({
   height: '100%',
   backgroundColor: (theme.vars || theme).palette.background.paper,
   '&:hover': {
-    backgroundColor: 'transparent',
     cursor: 'pointer',
   },
   '&:focus-visible': {
@@ -148,7 +147,7 @@ export default function Explore() {
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4, mt: 2 }}>
       <div>
         <Typography variant="h1" gutterBottom>
-          Chef Curated <font color="#FF8A00">Must-haves</font>
+          Chef Curated <font color="#e78310">Must-haves</font>
         </Typography>
         <Typography>Handpicked hits from across the culinary world, trending meals, crowd-pleasers, and fresh ideas to spark your next kitchen adventure. 💛</Typography>
       </div>

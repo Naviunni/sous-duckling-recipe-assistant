@@ -40,7 +40,7 @@ export default function Chat() {
       {/* Header */}
       <Box sx={{ mb: 3 }}>
         <Typography variant="h1" gutterBottom>
-          Chat with <span style={{ color: '#FF8A00' }}>Sous Duckling</span>
+          Chat with <span style={{ color: '#e78310' }}>Sous Duckling</span>
         </Typography>
         <Typography>
           Ask away, chef! I've got recipes to share, ingredients to adjust,
