@@ -1,12 +1,7 @@
 import React from "react";
 import PropTypes from 'prop-types';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-
-import { inputsCustomizations } from './customizations/inputs';
-import { dataDisplayCustomizations } from './customizations/dataDisplay';
-import { feedbackCustomizations } from './customizations/feedback';
-import { navigationCustomizations } from './customizations/navigation';
-import { surfacesCustomizations } from './customizations/surfaces';
+import { dataDisplayCustomizations, feedbackCustomizations, inputsCustomizations, navigationCustomizations, surfacesCustomizations } from './customizations';
 import { colorSchemes, typography, shadows, shape } from './themePrimitives';
 
 function AppTheme(props) {
@@ -17,10 +12,10 @@ function AppTheme(props) {
       : createTheme({
           // For more details about CSS variables configuration, see https://mui.com/material-ui/customization/css-theme-variables/configuration/
           cssVariables: {
-            colorSchemeSelector: 'data-mui-color-scheme',
+            // colorSchemeSelector: 'data-mui-color-scheme',
             cssVarPrefix: 'template',
           },
-          colorSchemes, // Recently added in v6 for building light & dark mode app, see https://mui.com/material-ui/customization/palette/#color-schemes
+          // colorSchemes, // Recently added in v6 for building light & dark mode app, see https://mui.com/material-ui/customization/palette/#color-schemes
           typography,
           shadows,
           shape,
