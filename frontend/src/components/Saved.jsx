@@ -25,7 +25,6 @@ const StyledCard = styled(Card)(({ theme }) => ({
   height: '100%',
   backgroundColor: (theme.vars || theme).palette.background.paper,
   '&:hover': {
-    backgroundColor: 'transparent',
     cursor: 'pointer',
   },
   '&:focus-visible': {
