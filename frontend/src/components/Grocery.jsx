@@ -25,7 +25,7 @@ export default function Grocery() {
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4, mt: 2 }}>
         <div>
             <Typography variant="h1" gutterBottom>
-                Chef's <font color="#FF8A00">Market Run</font>
+                Chef's <font color="#e78310">Market Run</font>
             </Typography>
             <Typography>I gathered all the ingredients you picked. Let's grab these goodies and whip up something delicious! 💛</Typography>
         </div>

@@ -19,7 +19,7 @@ export default function Brand(props) {
         fontFamily="Poppins, sans-serif"
         fontSize="32"
         fontWeight="600"
-        fill="#FF8A00"
+        fill="#e78310"
       >
         Sous
       </text>
@@ -29,7 +29,7 @@ export default function Brand(props) {
         fontFamily="Poppins, sans-serif"
         fontSize="32"
         fontWeight="600"
-        fill="#FF8A00"
+        fill="#e78310"
       >
         Duckling
       </text>

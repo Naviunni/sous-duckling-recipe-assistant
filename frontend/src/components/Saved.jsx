@@ -119,7 +119,7 @@ export default function Saved() {
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4, mt: 2 }}>
             <div>
                 <Typography variant="h1" gutterBottom>
-                Your <font color="#FF8A00">Cookbook</font>
+                Your <font color="#e78310">Cookbook</font>
                 </Typography>
                 <Typography>A place for your favorite recipes to live, grow, and inspire your next meal. 💛</Typography>
             </div>
