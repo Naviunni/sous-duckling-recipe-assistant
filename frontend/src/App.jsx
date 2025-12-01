@@ -10,7 +10,7 @@ import Saved from './components/Saved';
 import Explore from './components/Explore';
 import Grocery from './components/Grocery';
 import Login from "./components/Login.jsx";
-import { getProfile } from "./utils/auth.js";
+import { getProfile } from "./utils/auth.jsx";
 
 function RequireAuth({ children }) {
   // simple client-side guard — replace with real session check when you have a backend

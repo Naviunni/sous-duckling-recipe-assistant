@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import { listSaved, removeSavedByName } from '../utils/saved.js';
+import { listSaved, removeSavedByName } from '../utils/saved.jsx';
 import Avatar from '@mui/material/Avatar';
 import AvatarGroup from '@mui/material/AvatarGroup';
 import Box from '@mui/material/Box';
