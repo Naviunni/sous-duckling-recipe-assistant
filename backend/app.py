@@ -203,14 +203,11 @@ async def upsert_my_profile(payload: ProfilePayload, request: Request):
         if not prof:
             prof = UserProfile(user_id=user_id)
             db.add(prof)
-        if payload.allergies is not None:
-            prof.allergies = [a.strip() for a in payload.allergies if a and a.strip()]
-        if payload.dietary_restrictions is not None:
-            prof.dietary_restrictions = [d.strip() for d in payload.dietary_restrictions if d and d.strip()]
-        if payload.disliked_ingredients is not None:
-            prof.disliked_ingredients = [d.strip() for d in payload.disliked_ingredients if d and d.strip()]
-        if payload.skill_level is not None:
-            prof.skill_level = payload.skill_level.strip()
+        # Normalize inputs; always set, defaulting to []/None to avoid stale/null values
+        prof.allergies = [a.strip() for a in (payload.allergies or []) if a and a.strip()]
+        prof.dietary_restrictions = [d.strip() for d in (payload.dietary_restrictions or []) if d and d.strip()]
+        prof.disliked_ingredients = [d.strip() for d in (payload.disliked_ingredients or []) if d and d.strip()]
+        prof.skill_level = (payload.skill_level.strip() if payload.skill_level else None)
         await db.commit()
         return {"ok": True}
 
