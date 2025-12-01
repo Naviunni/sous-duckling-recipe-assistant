@@ -8,7 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
 from .database import async_session
-from .models import User, UserProfile
+from .models import User, UserProfile, SavedRecipe
 from .utils.auth_utils import hash_password, verify_password, make_token, verify_token
 
 from .utils.logging_utils import get_logger
@@ -211,6 +211,66 @@ async def upsert_my_profile(payload: ProfilePayload, request: Request):
             prof.disliked_ingredients = [d.strip() for d in payload.disliked_ingredients if d and d.strip()]
         if payload.skill_level is not None:
             prof.skill_level = payload.skill_level.strip()
+        await db.commit()
+        return {"ok": True}
+
+
+# ===== Saved recipes (per user) =====
+
+class SavedRecipePayload(BaseModel):
+    name: str
+    ingredients: List[Ingredient]
+    steps: List[str]
+
+
+@app.get("/me/saved")
+async def list_my_saved(request: Request):
+    user_id = _require_user_id(request)
+    async with async_session() as db:
+        res = await db.execute(select(SavedRecipe).where(SavedRecipe.user_id == user_id).order_by(SavedRecipe.saved_at.desc()))
+        rows = res.scalars().all()
+        out = []
+        for r in rows:
+            data = r.recipe_data or {}
+            data["savedAt"] = (r.saved_at.isoformat() if r.saved_at else None)
+            out.append(data)
+        return out
+
+
+@app.post("/me/saved")
+async def save_my_recipe(payload: SavedRecipePayload, request: Request):
+    user_id = _require_user_id(request)
+    async with async_session() as db:
+        # Upsert by (user_id, recipe_title)
+        res = await db.execute(
+            select(SavedRecipe).where(
+                SavedRecipe.user_id == user_id,
+                SavedRecipe.recipe_title == payload.name,
+            )
+        )
+        existing = res.scalar_one_or_none()
+        if existing:
+            existing.recipe_data = payload.model_dump()
+        else:
+            db.add(SavedRecipe(user_id=user_id, recipe_title=payload.name, recipe_data=payload.model_dump()))
+        await db.commit()
+        return {"ok": True}
+
+
+@app.delete("/me/saved")
+async def delete_my_saved(name: str, request: Request):
+    user_id = _require_user_id(request)
+    async with async_session() as db:
+        res = await db.execute(
+            select(SavedRecipe).where(
+                SavedRecipe.user_id == user_id,
+                SavedRecipe.recipe_title == name,
+            )
+        )
+        existing = res.scalar_one_or_none()
+        if not existing:
+            raise HTTPException(status_code=404, detail="Not found")
+        await db.delete(existing)
         await db.commit()
         return {"ok": True}
 

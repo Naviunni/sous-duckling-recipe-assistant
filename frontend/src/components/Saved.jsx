@@ -101,16 +101,21 @@ export default function Saved() {
     const [items, setItems] = useState([]);
     const [selected, setSelected] = useState(null);
     
-    function refresh() {
-        setItems(listSaved());
+    async function refresh() {
+        try {
+            const data = await listSaved();
+            setItems(data);
+        } catch {
+            setItems([]);
+        }
     }
 
     useEffect(() => {
         refresh();
     }, []);
 
-    function remove(name) {
-        removeSavedByName(name);
+    async function remove(name) {
+        await removeSavedByName(name);
         refresh();
     }
 

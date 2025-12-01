@@ -81,3 +81,38 @@ export async function getMyProfile(token) {
   if (!res.ok) throw new Error(data?.detail || `get profile failed: ${res.status}`)
   return data
 }
+
+export async function listSavedRecipes(token) {
+  const res = await fetch(`${API_BASE}/me/saved`, {
+    headers: { 'Authorization': `Bearer ${token}` },
+  })
+  const data = await res.json().catch(() => ([]))
+  if (!res.ok) throw new Error(data?.detail || `list saved failed: ${res.status}`)
+  return data
+}
+
+export async function saveRecipeForMe(token, recipe) {
+  const res = await fetch(`${API_BASE}/me/saved`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify(recipe),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data?.detail || `save recipe failed: ${res.status}`)
+  return data
+}
+
+export async function deleteSavedForMe(token, name) {
+  const res = await fetch(`${API_BASE}/me/saved?name=${encodeURIComponent(name)}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data?.detail || `delete saved failed: ${res.status}`)
+  return data
+}

@@ -19,16 +19,29 @@ export default function RecipeCard({ recipe }) {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    setSaved(isSavedByName(recipe.name));
-  }, [recipe?.name]);
+    let active = true
+    ;(async () => {
+      try {
+        const s = await isSavedByName(recipe.name)
+        if (active) setSaved(s)
+      } catch {
+        if (active) setSaved(false)
+      }
+    })()
+    return () => { active = false }
+  }, [recipe?.name])
 
-  function toggleSave() {
-    if (saved) {
-      removeSavedByName(recipe.name);
-      setSaved(false);
-    } else {
-      saveRecipe(recipe);
-      setSaved(true);
+  async function toggleSave() {
+    try {
+      if (saved) {
+        await removeSavedByName(recipe.name)
+        setSaved(false)
+      } else {
+        await saveRecipe(recipe)
+        setSaved(true)
+      }
+    } catch (e) {
+      // noop; in a real app, surface a toast
     }
   }
 
