@@ -1,9 +1,15 @@
 """FastAPI backend for the AI-assisted recipe assistant."""
 
 from typing import List, Optional, Dict, Any
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
+from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
+
+from .database import async_session
+from .models import User, UserProfile
+from .utils.auth_utils import hash_password, verify_password, make_token, verify_token
 
 from .utils.logging_utils import get_logger
 from . import context_manager as ctx
@@ -62,6 +68,121 @@ def _respond(session_id: str, reply: str, recipe: Optional[Dict[str, Any]] = Non
     """Append assistant message to history and return API response payload."""
     ctx.append_assistant_message(session_id, reply)
     return {"reply": reply, "recipe": recipe}
+
+
+# ===== Auth models & routes =====
+
+class AuthRequest(BaseModel):
+    email: str
+    password: str
+
+
+class AuthProfile(BaseModel):
+    id: str
+    email: str
+    name: Optional[str] = None
+
+
+class AuthResponse(BaseModel):
+    token: str
+    profile: AuthProfile
+
+
+def _profile_from_user(u: User) -> Dict[str, Any]:
+    name = (u.email.split("@")[0] if u.email and "@" in u.email else u.email) or "User"
+    return {"id": str(u.user_id), "email": u.email, "name": name}
+
+
+@app.post("/auth/signup", response_model=AuthResponse)
+async def signup(req: AuthRequest):
+    email = (req.email or "").strip().lower()
+    if not email or "@" not in email:
+        raise HTTPException(status_code=400, detail="Valid email is required")
+    if not req.password or len(req.password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+
+    async with async_session() as db:
+        exists = await db.execute(select(User).where(User.email == email))
+        if exists.scalar_one_or_none() is not None:
+            raise HTTPException(status_code=409, detail="Email already registered")
+        u = User(email=email, password_hash=hash_password(req.password))
+        db.add(u)
+        # create a default profile
+        await db.flush()
+        db.add(UserProfile(user_id=u.user_id))
+        try:
+            await db.commit()
+        except IntegrityError:
+            await db.rollback()
+            raise HTTPException(status_code=409, detail="Email already registered")
+
+        token = make_token(u.user_id)
+        return {"token": token, "profile": _profile_from_user(u)}
+
+
+@app.post("/auth/login", response_model=AuthResponse)
+async def login(req: AuthRequest):
+    email = (req.email or "").strip().lower()
+    if not email or not req.password:
+        raise HTTPException(status_code=400, detail="Email and password are required")
+
+    async with async_session() as db:
+        res = await db.execute(select(User).where(User.email == email))
+        u = res.scalar_one_or_none()
+        if u is None or not verify_password(req.password, u.password_hash):
+            raise HTTPException(status_code=401, detail="Invalid credentials")
+        token = make_token(u.user_id)
+        return {"token": token, "profile": _profile_from_user(u)}
+
+
+class ProfilePayload(BaseModel):
+    allergies: Optional[List[str]] = None
+    dietary_restrictions: Optional[List[str]] = None
+    disliked_ingredients: Optional[List[str]] = None
+    skill_level: Optional[str] = None
+
+
+def _require_user_id(request: Request):
+    auth = request.headers.get("authorization") or request.headers.get("Authorization")
+    if not auth or not auth.lower().startswith("bearer "):
+        raise HTTPException(status_code=401, detail="Missing bearer token")
+    token = auth.split(" ", 1)[1]
+    uid = verify_token(token)
+    if not uid:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    return uid
+
+
+@app.get("/me/profile", response_model=AuthProfile)
+async def get_my_profile(request: Request):
+    user_id = _require_user_id(request)
+    async with async_session() as db:
+        res = await db.execute(select(User).where(User.user_id == user_id))
+        u = res.scalar_one_or_none()
+        if not u:
+            raise HTTPException(status_code=404, detail="User not found")
+        return _profile_from_user(u)
+
+
+@app.post("/me/profile")
+async def upsert_my_profile(payload: ProfilePayload, request: Request):
+    user_id = _require_user_id(request)
+    async with async_session() as db:
+        res = await db.execute(select(UserProfile).where(UserProfile.user_id == user_id))
+        prof = res.scalar_one_or_none()
+        if not prof:
+            prof = UserProfile(user_id=user_id)
+            db.add(prof)
+        if payload.allergies is not None:
+            prof.allergies = [a.strip() for a in payload.allergies if a and a.strip()]
+        if payload.dietary_restrictions is not None:
+            prof.dietary_restrictions = [d.strip() for d in payload.dietary_restrictions if d and d.strip()]
+        if payload.disliked_ingredients is not None:
+            prof.disliked_ingredients = [d.strip() for d in payload.disliked_ingredients if d and d.strip()]
+        if payload.skill_level is not None:
+            prof.skill_level = payload.skill_level.strip()
+        await db.commit()
+        return {"ok": True}
 
 
 @app.get("/recipes/{name}", response_model=Recipe)

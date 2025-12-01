@@ -30,3 +30,38 @@ export async function substitute(ingredient) {
   return res.json()
 }
 
+export async function signup(email, password) {
+  const res = await fetch(`${API_BASE}/auth/signup`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password })
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data?.detail || `signup failed: ${res.status}`)
+  return data
+}
+
+export async function login(email, password) {
+  const res = await fetch(`${API_BASE}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password })
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data?.detail || `login failed: ${res.status}`)
+  return data
+}
+
+export async function saveMyProfile(token, profile) {
+  const res = await fetch(`${API_BASE}/me/profile`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify(profile)
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data?.detail || `save profile failed: ${res.status}`)
+  return data
+}

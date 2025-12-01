@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { signInMock } from "../utils/auth";
+import { signIn, signUp } from "../utils/auth";
 import { useNavigate } from "react-router-dom";
 
 import {
@@ -15,6 +15,7 @@ export default function LoginForm() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [isSignup, setIsSignup] = useState(false);
   const navigate = useNavigate();
 
   async function handleSubmit(e) {
@@ -23,8 +24,13 @@ export default function LoginForm() {
     setLoading(true);
 
     try {
-      await signInMock(identifier, password);
-      setTimeout(() => navigate("/", { replace: true }), 220);
+      if (isSignup) {
+        await signUp(identifier, password);
+        setTimeout(() => navigate("/welcome", { replace: true }), 220);
+      } else {
+        await signIn(identifier, password);
+        setTimeout(() => navigate("/", { replace: true }), 220);
+      }
     } catch (err) {
       setError(err?.message || "Sign in failed");
     } finally {
@@ -37,7 +43,7 @@ export default function LoginForm() {
       <Stack spacing={2}>
         {/* Email / Username */}
         <TextField
-          label="Email or username"
+          label="Email"
           fullWidth
           required
           value={identifier}
@@ -78,7 +84,7 @@ export default function LoginForm() {
               fontWeight: 600,
             }}
           >
-            {loading ? "Signing in..." : "Sign in"}
+            {loading ? (isSignup ? "Creating account..." : "Signing in...") : (isSignup ? "Create account" : "Sign in")}
           </Button>
 
           <Button
@@ -94,6 +100,14 @@ export default function LoginForm() {
             Demo
           </Button>
         </Stack>
+
+        <Button
+          variant="text"
+          onClick={() => setIsSignup((v) => !v)}
+          sx={{ textTransform: 'none' }}
+        >
+          {isSignup ? "Already have an account? Sign in" : "New here? Create an account"}
+        </Button>
       </Stack>
     </Box>
   );
