@@ -95,7 +95,15 @@ export default function Onboarding() {
               ))
             }
             renderInput={(params) => (
-              <TextField {...params} label="Allergies" placeholder="e.g., peanuts, shellfish" />
+              <TextField
+                {...params}
+                label="Allergies"
+                placeholder="e.g., peanuts, shellfish"
+                variant="outlined"
+                margin="normal"
+                InputLabelProps={{ ...(params.InputLabelProps || {}), shrink: true }}
+                sx={{ '& .MuiInputLabel-outlined': { backgroundColor: (theme) => (theme.vars ? `rgb(${theme.vars.palette.background.paperChannel})` : theme.palette.background.paper), px: 0.5 } }}
+              />
             )}
           />
 
@@ -110,7 +118,15 @@ export default function Onboarding() {
               ))
             }
             renderInput={(params) => (
-              <TextField {...params} label="Dietary preferences" placeholder="Choose any that apply" />
+              <TextField
+                {...params}
+                label="Dietary preferences"
+                placeholder="Choose any that apply"
+                variant="outlined"
+                margin="normal"
+                InputLabelProps={{ ...(params.InputLabelProps || {}), shrink: true }}
+                sx={{ '& .MuiInputLabel-outlined': { backgroundColor: (theme) => (theme.vars ? `rgb(${theme.vars.palette.background.paperChannel})` : theme.palette.background.paper), px: 0.5 } }}
+              />
             )}
           />
 
@@ -126,12 +142,20 @@ export default function Onboarding() {
               ))
             }
             renderInput={(params) => (
-              <TextField {...params} label="Disliked ingredients" placeholder="e.g., cilantro, mushrooms" />
+              <TextField
+                {...params}
+                label="Disliked ingredients"
+                placeholder="e.g., cilantro, mushrooms"
+                variant="outlined"
+                margin="normal"
+                InputLabelProps={{ ...(params.InputLabelProps || {}), shrink: true }}
+                sx={{ '& .MuiInputLabel-outlined': { backgroundColor: (theme) => (theme.vars ? `rgb(${theme.vars.palette.background.paperChannel})` : theme.palette.background.paper), px: 0.5 } }}
+              />
             )}
           />
 
           <FormControl fullWidth>
-            <InputLabel id="skill-label">Cooking skill level</InputLabel>
+            <InputLabel id="skill-label" sx={{ backgroundColor: (theme) => (theme.vars ? `rgb(${theme.vars.palette.background.paperChannel})` : theme.palette.background.paper), px: 0.5 }}>Cooking skill level</InputLabel>
             <Select
               labelId="skill-label"
               label="Cooking skill level"
@@ -167,4 +191,3 @@ export default function Onboarding() {
     </Box>
   )
 }
-

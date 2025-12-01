@@ -50,6 +50,15 @@ export default function LoginForm() {
           onChange={(e) => setIdentifier(e.target.value)}
           placeholder="you@example.com"
           autoComplete="username"
+          variant="outlined"
+          margin="normal"
+          InputLabelProps={{ shrink: true }}
+          sx={{
+            '& .MuiInputLabel-outlined': {
+              backgroundColor: (theme) => (theme.vars ? `rgb(${theme.vars.palette.background.paperChannel})` : theme.palette.background.paper),
+              px: 0.5,
+            },
+          }}
         />
 
         {/* Password */}
@@ -62,6 +71,15 @@ export default function LoginForm() {
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Enter password"
           autoComplete="current-password"
+          variant="outlined"
+          margin="normal"
+          InputLabelProps={{ shrink: true }}
+          sx={{
+            '& .MuiInputLabel-outlined': {
+              backgroundColor: (theme) => (theme.vars ? `rgb(${theme.vars.palette.background.paperChannel})` : theme.palette.background.paper),
+              px: 0.5,
+            },
+          }}
         />
 
         {/* Error Alert */}
