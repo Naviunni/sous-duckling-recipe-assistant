@@ -11,7 +11,7 @@ import {
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 
-import { isSavedByName, saveRecipe, removeSavedByName } from '../utils/saved.js';
+import { isSavedByName, saveRecipe, removeSavedByName } from '../utils/saved.jsx';
 
 export default function RecipeCard({ recipe }) {
   if (!recipe) return null;

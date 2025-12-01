@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { getToken, getProfile, signOut } from "../utils/auth.js";
+import { getToken, getProfile, signOut } from "../utils/auth.jsx";
 import { alpha, styled } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import AppBar from '@mui/material/AppBar';
