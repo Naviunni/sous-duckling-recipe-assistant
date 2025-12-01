@@ -153,15 +153,45 @@ def _require_user_id(request: Request):
     return uid
 
 
-@app.get("/me/profile", response_model=AuthProfile)
+async def _load_profile(user_id) -> Dict[str, Any]:
+    async with async_session() as db:
+        p_res = await db.execute(select(UserProfile).where(UserProfile.user_id == user_id))
+        p = p_res.scalar_one_or_none()
+        if not p:
+            return {"allergies": [], "dietary_restrictions": [], "disliked_ingredients": [], "skill_level": None}
+        return {
+            "allergies": p.allergies or [],
+            "dietary_restrictions": p.dietary_restrictions or [],
+            "disliked_ingredients": p.disliked_ingredients or [],
+            "skill_level": p.skill_level,
+        }
+
+
+class FullProfile(AuthProfile):
+    allergies: Optional[List[str]] = None
+    dietary_restrictions: Optional[List[str]] = None
+    disliked_ingredients: Optional[List[str]] = None
+    skill_level: Optional[str] = None
+
+
+@app.get("/me/profile", response_model=FullProfile)
 async def get_my_profile(request: Request):
     user_id = _require_user_id(request)
     async with async_session() as db:
-        res = await db.execute(select(User).where(User.user_id == user_id))
-        u = res.scalar_one_or_none()
+        u_res = await db.execute(select(User).where(User.user_id == user_id))
+        u = u_res.scalar_one_or_none()
         if not u:
             raise HTTPException(status_code=404, detail="User not found")
-        return _profile_from_user(u)
+        p_res = await db.execute(select(UserProfile).where(UserProfile.user_id == user_id))
+        p = p_res.scalar_one_or_none()
+        prof = _profile_from_user(u)
+        prof.update({
+            "allergies": p.allergies if p else [],
+            "dietary_restrictions": p.dietary_restrictions if p else [],
+            "disliked_ingredients": p.disliked_ingredients if p else [],
+            "skill_level": p.skill_level if p else None,
+        })
+        return prof
 
 
 @app.post("/me/profile")
@@ -204,7 +234,7 @@ async def substitute(req: SubstituteRequest):
 
 
 @app.post("/ask", response_model=AskResponse)
-async def ask(req: AskRequest):
+async def ask(req: AskRequest, request: Request):
     """Conversational endpoint coordinating retrieval, substitutions, and state.
 
     - If user asks for a recipe, fetch it, save in session, apply any known dislikes.
@@ -219,7 +249,23 @@ async def ask(req: AskRequest):
     # Record user message
     ctx.append_user_message(session_id, message)
 
-    # LLM required: if not available, inform user and return mock response
+    # Enrich session with user's saved preferences, if authenticated
+    dietary: list[str] = []
+    skill_level: Optional[str] = None
+    auth = request.headers.get("authorization") or request.headers.get("Authorization")
+    if auth and auth.lower().startswith("bearer "):
+        uid = verify_token(auth.split(" ", 1)[1])
+        if uid:
+            profile = await _load_profile(uid)
+            dietary = list(profile.get("dietary_restrictions") or [])
+            skill_level = profile.get("skill_level")
+            # Seed allergies and user dislikes into session once
+            sess = ctx.get_or_create_session(session_id)
+            if not sess.get("profile_applied"):
+                for item in (profile.get("allergies") or []) + (profile.get("disliked_ingredients") or []):
+                    if item:
+                        ctx.add_dislike(session_id, str(item))
+                sess["profile_applied"] = True
     if not has_llm():
         return _respond(session_id, "LLM is not available. Please configure OPENAI_API_KEY to enable recipe generation.", None)
 
@@ -240,7 +286,14 @@ async def ask(req: AskRequest):
             if src:
                 dislikes.add(src)
         updated = normalize_recipe(
-            modify_recipe(current, list(dislikes), [(r["src"], r["dst"]) for r in replacements if r.get("src") and r.get("dst")], history)
+            modify_recipe(
+                current,
+                list(dislikes),
+                [(r["src"], r["dst"]) for r in replacements if r.get("src") and r.get("dst")],
+                dietary,
+                skill_level,
+                history,
+            )
         )
         ctx.set_current_recipe(session_id, updated)
         if replacements:
@@ -258,7 +311,7 @@ async def ask(req: AskRequest):
             current = ctx.get_current_recipe(session_id)
             if current:
                 regenerated = normalize_recipe(
-                    modify_recipe(current, list(ctx.get_dislikes(session_id)), None, history)
+                    modify_recipe(current, list(ctx.get_dislikes(session_id)), None, dietary, skill_level, history)
                 )
                 ctx.set_current_recipe(session_id, regenerated)
                 reply = "Regenerated the recipe based on your dislikes."
@@ -267,7 +320,15 @@ async def ask(req: AskRequest):
 
     if intent == "get_recipe" and parsed.get("recipe_name"):
         rn = parsed.get("recipe_name")
-        generated = normalize_recipe(generate_recipe(rn, list(ctx.get_dislikes(session_id)), history))
+        generated = normalize_recipe(
+            generate_recipe(
+                rn,
+                list(ctx.get_dislikes(session_id)),
+                dietary,
+                skill_level,
+                history,
+            )
+        )
         ctx.set_current_recipe(session_id, generated)
         reply = f"Here's a recipe for {generated.get('name', rn)}."
         return _respond(session_id, reply, generated)
