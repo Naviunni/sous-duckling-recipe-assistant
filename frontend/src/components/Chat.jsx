@@ -3,8 +3,10 @@ import ChatUI from './ChatUI';
 import RecipeCard from './RecipeCard';
 import { ask } from '../utils/api';
 import { getSessionId } from '../utils/session';
-import { Box, Grid, Typography } from '@mui/material';
+import { Box, Grid, Typography, Chip, Stack } from '@mui/material';
 import { useLocation } from 'react-router-dom';
+import { getToken } from '../utils/auth';
+import { getMyProfile } from '../utils/api';
 
 export default function Chat() {
   const sessionId = useMemo(() => getSessionId(), []);
@@ -16,12 +18,35 @@ export default function Chat() {
     }
   ]);
   const [recipe, setRecipe] = useState(null);
+  const [constraints, setConstraints] = useState({ dietary: [], allergies: [], dislikes: [], skill: null })
 
   // If navigated with a preloaded recipe (from Saved), show it immediately
   useEffect(() => {
     const r = location.state?.recipe
     if (r) setRecipe(r)
   }, [location.state])
+
+  // Load user constraints for badges
+  useEffect(() => {
+    const token = getToken()
+    let active = true
+    if (!token) return
+    ;(async () => {
+      try {
+        const p = await getMyProfile(token)
+        if (!active) return
+        setConstraints({
+          dietary: p?.dietary_restrictions || [],
+          allergies: p?.allergies || [],
+          dislikes: p?.disliked_ingredients || [],
+          skill: p?.skill_level || null,
+        })
+      } catch {
+        if (active) setConstraints({ dietary: [], allergies: [], dislikes: [], skill: null })
+      }
+    })()
+    return () => { active = false }
+  }, [])
 
   async function sendMessage(text) {
     const msg = text.trim();
@@ -55,6 +80,34 @@ export default function Chat() {
           and culinary magic to help you whip up something delicious. 💛
         </Typography>
       </Box>
+
+      {/* Active constraints badges */}
+      {(constraints.dietary.length || constraints.allergies.length || constraints.dislikes.length || constraints.skill) ? (
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.secondary' }}>Active constraints</Typography>
+          <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+            {constraints.skill && (
+              <Chip size="small" label={`Skill: ${constraints.skill}`} color="default" variant="outlined" />
+            )}
+            {constraints.dietary.slice(0, 6).map((d, i) => (
+              <Chip key={`diet-${i}`} size="small" label={d} color="primary" variant="outlined" />
+            ))}
+            {constraints.allergies.slice(0, 6).map((a, i) => (
+              <Chip key={`all-${i}`} size="small" label={a} color="error" variant="filled" />
+            ))}
+            {constraints.dislikes.slice(0, 6).map((d, i) => (
+              <Chip key={`dis-${i}`} size="small" label={d} color="warning" variant="outlined" />
+            ))}
+            {Math.max(0,
+              (constraints.dietary.length - 6) +
+              (constraints.allergies.length - 6) +
+              (constraints.dislikes.length - 6)
+            ) > 0 && (
+              <Chip size="small" label={"+ more"} variant="outlined" />
+            )}
+          </Stack>
+        </Box>
+      ) : null}
 
       <Grid container sx={{ width: '100%' }} spacing={2}>
         {/* LEFT: Chat */}
