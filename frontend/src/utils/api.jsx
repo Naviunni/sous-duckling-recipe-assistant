@@ -116,3 +116,19 @@ export async function deleteSavedForMe(token, name) {
   if (!res.ok) throw new Error(data?.detail || `delete saved failed: ${res.status}`)
   return data
 }
+
+export async function loadRecipeToChat(sessionId, recipe) {
+  const headers = { 'Content-Type': 'application/json' }
+  try {
+    const token = localStorage.getItem('sous_token')
+    if (token) headers['Authorization'] = `Bearer ${token}`
+  } catch {}
+  const res = await fetch(`${API_BASE}/chat/load`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ session_id: sessionId, recipe })
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data?.detail || `load chat failed: ${res.status}`)
+  return data
+}

@@ -275,6 +275,35 @@ async def delete_my_saved(name: str, request: Request):
         return {"ok": True}
 
 
+# Load a saved recipe into a chat session so user can continue chatting
+class LoadChatRequest(BaseModel):
+    session_id: str
+    recipe: Recipe
+
+
+@app.post("/chat/load")
+async def chat_load(req: LoadChatRequest, request: Request):
+    # Optional: apply auth/profile dislikes just like /ask
+    auth = request.headers.get("authorization") or request.headers.get("Authorization")
+    if auth and auth.lower().startswith("bearer "):
+        uid = verify_token(auth.split(" ", 1)[1])
+        if uid:
+            profile = await _load_profile(uid)
+            sess = ctx.get_or_create_session(req.session_id)
+            if not sess.get("profile_applied"):
+                for item in (profile.get("allergies") or []) + (profile.get("disliked_ingredients") or []):
+                    if item:
+                        ctx.add_dislike(req.session_id, str(item))
+                sess["profile_applied"] = True
+
+    # Set current recipe
+    data = req.recipe.dict()
+    ctx.set_current_recipe(req.session_id, normalize_recipe(data))
+    # Also append a friendly assistant message
+    ctx.append_assistant_message(req.session_id, f"Loaded your saved recipe for {data.get('name','')}.")
+    return {"ok": True, "recipe": data}
+
+
 @app.get("/recipes/{name}", response_model=Recipe)
 async def get_recipe(name: str):
     """Fetch a recipe by name from local data."""

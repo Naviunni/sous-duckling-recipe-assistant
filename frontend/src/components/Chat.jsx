@@ -1,12 +1,14 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import ChatUI from './ChatUI';
 import RecipeCard from './RecipeCard';
 import { ask } from '../utils/api';
 import { getSessionId } from '../utils/session';
 import { Box, Grid, Typography } from '@mui/material';
+import { useLocation } from 'react-router-dom';
 
 export default function Chat() {
   const sessionId = useMemo(() => getSessionId(), []);
+  const location = useLocation();
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
@@ -14,6 +16,12 @@ export default function Chat() {
     }
   ]);
   const [recipe, setRecipe] = useState(null);
+
+  // If navigated with a preloaded recipe (from Saved), show it immediately
+  useEffect(() => {
+    const r = location.state?.recipe
+    if (r) setRecipe(r)
+  }, [location.state])
 
   async function sendMessage(text) {
     const msg = text.trim();
