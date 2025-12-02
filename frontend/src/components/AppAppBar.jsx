@@ -168,6 +168,16 @@ export default function AppAppBar() {
                 </span>
 
                 <Button
+                  component={Link}
+                  to="/profile"
+                  color="info"
+                  variant="outlined"
+                  size="small"
+                >
+                  Profile
+                </Button>
+
+                <Button
                   color="error"
                   variant="outlined"
                   size="small"
@@ -251,20 +261,25 @@ export default function AppAppBar() {
                       </Button>
                     </MenuItem>
                   ) : (
-                    <MenuItem>
-                      <Button
-                        color="error"
-                        variant="outlined"
-                        fullWidth
-                        onClick={() => {
-                          signOut();
-                          window.location.reload();
-                          setOpen(false);
-                        }}
-                      >
-                        Sign out
-                      </Button>
-                    </MenuItem>
+                    <>
+                      <MenuItem component={Link} to="/profile" onClick={() => setOpen(false)}>
+                        Profile
+                      </MenuItem>
+                      <MenuItem>
+                        <Button
+                          color="error"
+                          variant="outlined"
+                          fullWidth
+                          onClick={() => {
+                            signOut();
+                            window.location.reload();
+                            setOpen(false);
+                          }}
+                        >
+                          Sign out
+                        </Button>
+                      </MenuItem>
+                    </>
                   )}
 
               </Box>

@@ -9,6 +9,11 @@ import CardContent from '@mui/material/CardContent';
 import Chip from '@mui/material/Chip';
 import Dialog from '@mui/material/Dialog';
 import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import Button from '@mui/material/Button';
+import { getSessionId } from '../utils/session';
+import { loadRecipeToChat } from '../utils/api';
+import { useNavigate } from 'react-router-dom';
 import DialogTitle from '@mui/material/DialogTitle';
 import Grid from '@mui/material/Grid';
 import IconButton from '@mui/material/IconButton';
@@ -100,17 +105,23 @@ Author.propTypes = {
 export default function Saved() {
     const [items, setItems] = useState([]);
     const [selected, setSelected] = useState(null);
+    const navigate = useNavigate();
     
-    function refresh() {
-        setItems(listSaved());
+    async function refresh() {
+        try {
+            const data = await listSaved();
+            setItems(data);
+        } catch {
+            setItems([]);
+        }
     }
 
     useEffect(() => {
         refresh();
     }, []);
 
-    function remove(name) {
-        removeSavedByName(name);
+    async function remove(name) {
+        await removeSavedByName(name);
         refresh();
     }
 
@@ -162,11 +173,28 @@ export default function Saved() {
                 >
                   <CloseIcon />
                 </IconButton>
-              </DialogTitle>
+          </DialogTitle>
 
             <DialogContent dividers>
               {selected && <RecipeCard recipe={selected} />}
             </DialogContent>
+            <DialogActions sx={{ px: 3, py: 2 }}>
+              <Button
+                variant="contained"
+                onClick={async () => {
+                  try {
+                    const sessionId = getSessionId();
+                    await loadRecipeToChat(sessionId, selected);
+                  } catch {}
+                  // pass recipe via navigation state for immediate display
+                  navigate('/chat', { state: { recipe: selected } });
+                  setSelected(null);
+                }}
+                sx={{ bgcolor: '#FF8A00', '&:hover': { bgcolor: '#e67a00' }, fontWeight: 600 }}
+              >
+                Continue chatting
+              </Button>
+            </DialogActions>
           </Dialog>
 
         </Box>
