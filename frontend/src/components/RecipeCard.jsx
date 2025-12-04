@@ -65,6 +65,12 @@ export default function RecipeCard({ recipe }) {
     fat: { icon: '🥑', bg: 'linear-gradient(135deg, #eefaf5, #e2f4ed)', border: 'rgba(16,185,129,0.28)' },
     fiber: { icon: '🌿', bg: 'linear-gradient(135deg, #f1fff4, #e9ffef)', border: 'rgba(52,211,153,0.32)' },
   }
+  const servingSize =
+    recipe?.serving_size ||
+    recipe?.servingSize ||
+    recipe?.nutrition?.serving_size ||
+    recipe?.nutrition?.servingSize ||
+    null
 
   return (
     <Box
@@ -119,6 +125,9 @@ export default function RecipeCard({ recipe }) {
           }}
         >
           <span>Nutrition Facts (per serving)</span>
+          <Typography component="span" variant="caption" sx={{ color: 'text.secondary' }}>
+            Serving size: {servingSize || 'not provided'}
+          </Typography>
         </Typography>
         {nutritionEntries.length === 0 ? (
           <Box
