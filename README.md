@@ -96,34 +96,6 @@ Modules:
 - `backend/llm_interface.py` — OpenAI wrapper providing `ask_llm`, `generate_recipe`, `has_llm`
 - `backend/utils/logging_utils.py` — Lightweight structured logger
 
-## Authentication
-
-Simple email/password authentication is available and wired into the Login page.
-
-- Endpoints:
-  - `POST /auth/signup` with `{ "email": string, "password": string }` → returns `{ token, profile }`.
-  - `POST /auth/login` with `{ "email": string, "password": string }` → returns `{ token, profile }`.
-- Passwords are hashed using PBKDF2-HMAC-SHA256 with a per-user salt.
-- The frontend stores `token` and `profile` in `localStorage` and uses them for simple client-side gating.
-- Ensure `DATABASE_URL` is set in `.env` and run Alembic migrations before using auth. Optional: set `AUTH_SECRET` for token signing.
-
-## User Preferences
-
-- Onboarding: after signup, users are redirected to `/welcome` to set allergies, dietary preferences, disliked ingredients, and cooking skill level.
-- Profile Page: users can edit these anytime at `/profile` (auth required).
-- Endpoints:
-  - `GET /me/profile` → returns `{ id, email, name, allergies, dietary_restrictions, disliked_ingredients, skill_level }`.
-  - `POST /me/profile` → upserts the same fields; requires `Authorization: Bearer <token>`.
-
-
-## Preferences Applied In Chat
-
-- Authorization: the frontend includes `Authorization: Bearer <token>` with chat requests when available.
-- Backend behavior:
-  - Seeds session dislikes with `allergies` and `disliked_ingredients` (once per session).
-  - Passes `dietary_restrictions` and `skill_level` along with dislikes to recipe generation/modification.
-- Chat UI: shows “Active constraints” chips (dietary, allergies, dislikes, skill) under the header.
-
 ## Frontend Overview
 
 - Framework: React (Vite)

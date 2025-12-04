@@ -92,13 +92,7 @@ def _parse_json_safe(content: str, fallback: Optional[Dict[str, Any]] = None) ->
         return fallback or {}
 
 
-def generate_recipe(
-    recipe_name: str,
-    dislikes: Optional[list] = None,
-    dietary: Optional[list] = None,
-    skill_level: Optional[str] = None,
-    history: Optional[list] = None,
-) -> Dict:
+def generate_recipe(recipe_name: str, dislikes: Optional[list] = None, history: Optional[list] = None) -> Dict:
     """Generate a recipe via LLM as structured JSON.
 
     Returns a dict with keys: name, ingredients (list of {name, quantity}), steps (list[str]).
@@ -127,17 +121,13 @@ def generate_recipe(
         "You are a helpful cooking assistant. Generate concise, home-cook friendly recipes."
     )
     dislikes_text = ", ".join(dislikes) if dislikes else "none"
-    dietary_text = ", ".join(dietary or []) if dietary else "none"
-    skill_text = skill_level or ""
     user = (
         "Generate a complete recipe as compact JSON only. Schema: {\n"
         "  \"name\": string,\n"
         "  \"ingredients\": [ { \"name\": string, \"quantity\": string } ],\n"
         "  \"steps\": [ string ]\n"
         "}. Avoid markdown and extra commentary.\n"
-        f"Recipe: {recipe_name}. Exclude or replace these if possible: {dislikes_text}.\n"
-        f"Dietary restrictions to respect: {dietary_text}.\n"
-        + (f"Adjust complexity for a {skill_text.lower()} home cook.\n" if skill_text else "")
+        f"Recipe: {recipe_name}. Exclude or replace these if possible: {dislikes_text}."
     )
 
     try:
@@ -193,14 +183,7 @@ def chat_json(messages: list, max_tokens: int = 400) -> Dict:
         return {}
 
 
-def modify_recipe(
-    base_recipe: Dict,
-    dislikes: Optional[list] = None,
-    substitutions: Optional[list] = None,
-    dietary: Optional[list] = None,
-    skill_level: Optional[str] = None,
-    history: Optional[list] = None,
-) -> Dict:
+def modify_recipe(base_recipe: Dict, dislikes: Optional[list] = None, substitutions: Optional[list] = None, history: Optional[list] = None) -> Dict:
     """Modify an existing recipe via LLM given constraints.
 
     base_recipe: existing recipe JSON (name, ingredients, steps)
@@ -212,7 +195,6 @@ def modify_recipe(
 
     dislikes = dislikes or []
     substitutions = substitutions or []
-    dietary = dietary or []
     client = _get_client()
     if not client:
         # fallback: just return the base recipe unchanged
@@ -220,16 +202,12 @@ def modify_recipe(
 
     system = "You are a helpful cooking assistant. Modify the given recipe JSON to satisfy user constraints without losing structure."
     subs_text = "; ".join([f"{a} -> {b}" for a, b in substitutions]) if substitutions else "none"
-    user_parts = [
-        "Modify the following recipe JSON to avoid dislikes and apply substitutions, keeping the same JSON schema.\n",
-        f"Dislikes: {', '.join(dislikes) if dislikes else 'none'}\n",
-        f"Dietary restrictions to respect: {', '.join(dietary) if dietary else 'none'}\n",
-    ]
-    if skill_level:
-        user_parts.append(f"Adjust complexity for a {skill_level.lower()} home cook.\n")
-    user_parts.append(f"Substitutions: {subs_text}\n")
-    user_parts.append(f"Recipe JSON: {json.dumps(base_recipe, ensure_ascii=False)}")
-    user = "".join(user_parts)
+    user = (
+        "Modify the following recipe JSON to avoid dislikes and apply substitutions, keeping the same JSON schema.\n"
+        f"Dislikes: {', '.join(dislikes) if dislikes else 'none'}\n"
+        f"Substitutions: {subs_text}\n"
+        f"Recipe JSON: {json.dumps(base_recipe, ensure_ascii=False)}"
+    )
 
     messages = [{"role": "system", "content": system}]
     if history:

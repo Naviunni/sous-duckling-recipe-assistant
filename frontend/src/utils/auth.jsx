@@ -1,29 +1,35 @@
 import React from 'react';
-import { login as apiLogin, signup as apiSignup } from './api';
+  
+  const Auth = () =>  {
+	return (
+	  <div>
+	  </div>
+	);
+  }
+  
+  export default Auth;
+  const MOCK_USERS = {
+  john: {
+    password: "password123",
+    profile: { id: "1", name: "John Doe", email: "john@example.com" },
+  },
+  "john@example.com": {
+    password: "password123",
+    profile: { id: "1", name: "John Doe", email: "john@example.com" },
+  },
+};
 
-const Auth = () =>  {
-  return (
-    <div>
-    </div>
-  );
-}
-
-export default Auth;
-
-export async function signIn(email, password) {
-  const data = await apiLogin(email, password)
-  const { token, profile } = data
-  localStorage.setItem("sous_token", token)
-  localStorage.setItem("sous_profile", JSON.stringify(profile))
-  return token
-}
-
-export async function signUp(email, password) {
-  const data = await apiSignup(email, password)
-  const { token, profile } = data
-  localStorage.setItem("sous_token", token)
-  localStorage.setItem("sous_profile", JSON.stringify(profile))
-  return token
+export async function signInMock(identifier, password) {
+  await new Promise((r) => setTimeout(r, 600));
+  const key = (identifier || "").toLowerCase();
+  const user = MOCK_USERS[key];
+  if (!user || user.password !== password) {
+    throw new Error("Invalid credentials");
+  }
+  const token = `mock-token-${user.profile.id}-${Date.now()}`;
+  localStorage.setItem("sous_token", token);
+  localStorage.setItem("sous_profile", JSON.stringify(user.profile));
+  return token;
 }
 
 export function getToken() {

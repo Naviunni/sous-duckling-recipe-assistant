@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { signIn, signUp } from "../utils/auth";
+import { signInMock } from "../utils/auth";
 import { useNavigate } from "react-router-dom";
 
 import {
@@ -15,7 +15,6 @@ export default function LoginForm() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [isSignup, setIsSignup] = useState(false);
   const navigate = useNavigate();
 
   async function handleSubmit(e) {
@@ -24,13 +23,8 @@ export default function LoginForm() {
     setLoading(true);
 
     try {
-      if (isSignup) {
-        await signUp(identifier, password);
-        setTimeout(() => navigate("/welcome", { replace: true }), 220);
-      } else {
-        await signIn(identifier, password);
-        setTimeout(() => navigate("/", { replace: true }), 220);
-      }
+      await signInMock(identifier, password);
+      setTimeout(() => navigate("/", { replace: true }), 220);
     } catch (err) {
       setError(err?.message || "Sign in failed");
     } finally {
@@ -43,22 +37,13 @@ export default function LoginForm() {
       <Stack spacing={2}>
         {/* Email / Username */}
         <TextField
-          label="Email"
+          label="Email or username"
           fullWidth
           required
           value={identifier}
           onChange={(e) => setIdentifier(e.target.value)}
           placeholder="you@example.com"
           autoComplete="username"
-          variant="outlined"
-          margin="normal"
-          InputLabelProps={{ shrink: true }}
-          sx={{
-            '& .MuiInputLabel-outlined': {
-              backgroundColor: (theme) => (theme.vars ? `rgb(${theme.vars.palette.background.paperChannel})` : theme.palette.background.paper),
-              px: 0.5,
-            },
-          }}
         />
 
         {/* Password */}
@@ -71,15 +56,6 @@ export default function LoginForm() {
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Enter password"
           autoComplete="current-password"
-          variant="outlined"
-          margin="normal"
-          InputLabelProps={{ shrink: true }}
-          sx={{
-            '& .MuiInputLabel-outlined': {
-              backgroundColor: (theme) => (theme.vars ? `rgb(${theme.vars.palette.background.paperChannel})` : theme.palette.background.paper),
-              px: 0.5,
-            },
-          }}
         />
 
         {/* Error Alert */}
@@ -102,7 +78,7 @@ export default function LoginForm() {
               fontWeight: 600,
             }}
           >
-            {loading ? (isSignup ? "Creating account..." : "Signing in...") : (isSignup ? "Create account" : "Sign in")}
+            {loading ? "Signing in..." : "Sign in"}
           </Button>
 
           <Button
@@ -118,14 +94,6 @@ export default function LoginForm() {
             Demo
           </Button>
         </Stack>
-
-        <Button
-          variant="text"
-          onClick={() => setIsSignup((v) => !v)}
-          sx={{ textTransform: 'none' }}
-        >
-          {isSignup ? "Already have an account? Sign in" : "New here? Create an account"}
-        </Button>
       </Stack>
     </Box>
   );
