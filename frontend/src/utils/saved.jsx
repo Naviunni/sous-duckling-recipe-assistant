@@ -21,6 +21,7 @@ export async function saveRecipe(recipe) {
     ingredients: recipe?.ingredients || [],
     steps: recipe?.steps || [],
     nutrition: recipe?.nutrition || null,
+    serving_size: recipe?.serving_size || recipe?.servingSize || null,
   }
   return await saveRecipeForMe(token, entry)
 }
