@@ -20,6 +20,7 @@ export async function saveRecipe(recipe) {
     name: recipe?.name,
     ingredients: recipe?.ingredients || [],
     steps: recipe?.steps || [],
+    nutrition: recipe?.nutrition || null,
   }
   return await saveRecipeForMe(token, entry)
 }

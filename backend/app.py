@@ -43,6 +43,7 @@ class Recipe(BaseModel):
     name: str
     ingredients: List[Ingredient]
     steps: List[str]
+    nutrition: Optional[Dict[str, str]] = None
 
 
 class AskRequest(BaseModel):
@@ -218,6 +219,7 @@ class SavedRecipePayload(BaseModel):
     name: str
     ingredients: List[Ingredient]
     steps: List[str]
+    nutrition: Optional[Dict[str, str]] = None
 
 
 @app.get("/me/saved")
