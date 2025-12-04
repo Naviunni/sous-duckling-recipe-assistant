@@ -101,7 +101,8 @@ def generate_recipe(
 ) -> Dict:
     """Generate a recipe via LLM as structured JSON.
 
-    Returns a dict with keys: name, ingredients (list of {name, quantity}), steps (list[str]).
+    Returns a dict with keys: name, ingredients (list of {name, quantity}), steps (list[str]),
+    and nutrition (dict[str, str]) per serving.
     Falls back to a minimal stub if LLM unavailable.
     """
     import json
@@ -120,7 +121,13 @@ def generate_recipe(
                 f"Prepare the ingredients for {recipe_name}.",
                 "Cook and assemble as appropriate.",
                 "Serve warm."
-            ]
+            ],
+            "nutrition": {
+                "calories": "320 kcal",
+                "protein": "12 g",
+                "carbs": "40 g",
+                "fat": "12 g"
+            }
         }
 
     system = (
@@ -133,7 +140,8 @@ def generate_recipe(
         "Generate a complete recipe as compact JSON only. Schema: {\n"
         "  \"name\": string,\n"
         "  \"ingredients\": [ { \"name\": string, \"quantity\": string } ],\n"
-        "  \"steps\": [ string ]\n"
+        "  \"steps\": [ string ],\n"
+        "  \"nutrition\": { \"calories\": string, \"protein\": string, \"carbs\": string, \"fat\": string, \"fiber\": string }\n"
         "}. Avoid markdown and extra commentary.\n"
         f"Recipe: {recipe_name}. Exclude or replace these if possible: {dislikes_text}.\n"
         f"Dietary restrictions to respect: {dietary_text}.\n"
@@ -164,6 +172,14 @@ def generate_recipe(
             parsed["ingredients"] = []
         if "steps" not in parsed:
             parsed["steps"] = []
+        if "nutrition" not in parsed:
+            parsed["nutrition"] = {
+                "calories": "",
+                "protein": "",
+                "carbs": "",
+                "fat": "",
+                "fiber": "",
+            }
         return parsed
     except Exception as e:  # pragma: no cover - runtime/network errors
         return {"name": recipe_name, "ingredients": [], "steps": [f"LLM error: {e}"]}
@@ -203,7 +219,7 @@ def modify_recipe(
 ) -> Dict:
     """Modify an existing recipe via LLM given constraints.
 
-    base_recipe: existing recipe JSON (name, ingredients, steps)
+    base_recipe: existing recipe JSON (name, ingredients, steps, nutrition)
     dislikes: list of strings to avoid
     substitutions: list of pairs like [("milk", "oat milk")]
     history: optional chat history (list of {role, content}) for context
@@ -221,7 +237,7 @@ def modify_recipe(
     system = "You are a helpful cooking assistant. Modify the given recipe JSON to satisfy user constraints without losing structure."
     subs_text = "; ".join([f"{a} -> {b}" for a, b in substitutions]) if substitutions else "none"
     user_parts = [
-        "Modify the following recipe JSON to avoid dislikes and apply substitutions, keeping the same JSON schema.\n",
+        "Modify the following recipe JSON to avoid dislikes and apply substitutions, keeping the same JSON schema including nutrition per serving.\n",
         f"Dislikes: {', '.join(dislikes) if dislikes else 'none'}\n",
         f"Dietary restrictions to respect: {', '.join(dietary) if dietary else 'none'}\n",
     ]

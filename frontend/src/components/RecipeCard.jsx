@@ -7,6 +7,8 @@ import {
   List,
   ListItem,
   ListItemText,
+  Chip,
+  Tooltip,
 } from '@mui/material';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
@@ -45,6 +47,19 @@ export default function RecipeCard({ recipe }) {
     }
   }
 
+  const nutritionEntries = Object.entries(recipe.nutrition || {}).filter(
+    ([, value]) => Boolean(value && String(value).trim())
+  )
+  const preferredOrder = ['calories', 'protein', 'carbs', 'fat', 'fiber']
+  nutritionEntries.sort((a, b) => {
+    const ai = preferredOrder.indexOf(a[0].toLowerCase())
+    const bi = preferredOrder.indexOf(b[0].toLowerCase())
+    if (ai === -1 && bi === -1) return a[0].localeCompare(b[0])
+    if (ai === -1) return 1
+    if (bi === -1) return -1
+    return ai - bi
+  })
+
   return (
     <Box
       sx={{
@@ -80,6 +95,49 @@ export default function RecipeCard({ recipe }) {
             <FavoriteBorderIcon sx={{ fontSize: 26 }} />
           )}
         </IconButton>
+      </Box>
+
+      {/* Nutrition */}
+      <Box
+        sx={{
+          mb: 3,
+          p: 2.5,
+          borderRadius: 2,
+          background: 'linear-gradient(135deg, #fff7ed, #fffaf5)',
+          border: '1px solid rgba(255,138,0,0.18)',
+          display: 'flex',
+          gap: 1.5,
+          flexWrap: 'wrap',
+          alignItems: 'center',
+        }}
+      >
+        <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#d97700', letterSpacing: 0.3 }}>
+          Nutrition (per serving)
+        </Typography>
+        {nutritionEntries.length === 0 ? (
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            Nutrition details not provided for this recipe.
+          </Typography>
+        ) : (
+          nutritionEntries.map(([key, val]) => (
+            <Tooltip key={key} title={`Approximate ${key}`}>
+              <Chip
+                label={`${key.charAt(0).toUpperCase()}${key.slice(1)}: ${val}`}
+                sx={{
+                  bgcolor: 'rgba(255,138,0,0.08)',
+                  color: '#9a3412',
+                  borderColor: 'rgba(255,138,0,0.24)',
+                  borderWidth: 1,
+                  borderStyle: 'solid',
+                  fontWeight: 600,
+                  letterSpacing: 0.2,
+                }}
+                size="small"
+                variant="outlined"
+              />
+            </Tooltip>
+          ))
+        )}
       </Box>
 
       {/* Ingredients + Steps */}

@@ -6,7 +6,8 @@ from typing import Dict, Any, List
 def normalize_recipe(data: Dict[str, Any]) -> Dict[str, Any]:
     """Normalize a recipe-like dict into the API schema.
 
-    Ensures keys: name (str), ingredients (list[{name, quantity}]), steps (list[str]).
+    Ensures keys: name (str), ingredients (list[{name, quantity}]), steps (list[str]),
+    and optional nutrition (dict[str, str]).
     Tolerates alternative keys and mixed types.
     """
     name = str((data or {}).get("name", "recipe")).strip() or "recipe"
@@ -24,5 +25,20 @@ def normalize_recipe(data: Dict[str, Any]) -> Dict[str, Any]:
         steps = [s.strip() for s in raw_steps.split("\n") if s.strip()]
     else:
         steps = [str(s) for s in (raw_steps or [])]
-    return {"name": name, "ingredients": ingredients, "steps": steps}
+    raw_nutrition = (data or {}).get("nutrition") or {}
+    nutrition: Dict[str, str] = {}
+    if isinstance(raw_nutrition, dict):
+        for k, v in raw_nutrition.items():
+            key = str(k).strip() if k is not None else ""
+            if not key:
+                continue
+            if isinstance(v, (int, float)):
+                val = f"{v}"
+            elif v is None:
+                continue
+            else:
+                val = str(v).strip()
+            if val:
+                nutrition[key] = val
 
+    return {"name": name, "ingredients": ingredients, "steps": steps, "nutrition": nutrition or None}
