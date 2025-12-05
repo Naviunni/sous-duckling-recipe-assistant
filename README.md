@@ -86,6 +86,13 @@ Navigation:
   - `POST /ask` → Conversational endpoint; LLM generates recipe JSON (name, ingredients, steps). Falls back to local data if no API key.
   - `GET /recipes/{name}` → Fetch a recipe by name (local data)
   - `POST /substitute` → Suggest ingredient substitutions
+  - `POST /nutrition/preview` → Compute nutrition from a recipe payload using local ingredient metadata
+  - `POST /grocery` → Build a grocery list from one or more recipes (aggregated + grouped by aisle)
+  - `GET /me/grocery` → Fetch stored recipes + aggregated grocery view (auth required)
+  - `POST /me/grocery/recipe` → Upsert a recipe's grocery items into the stored list
+  - `DELETE /me/grocery/recipe` → Remove a recipe from the stored list
+  - `PATCH /me/grocery/item` → Override an aggregated grocery item (quantity/unit/aisle)
+  - `DELETE /me/grocery` → Clear all grocery data
 
 Modules:
 
@@ -137,6 +144,7 @@ Simple email/password authentication is available and wired into the Login page.
 ## Data
 
 - `data/recipes.json` — Mock recipes for local testing (e.g., Lasagna, Pancakes)
+- `data/ingredients.json` — Ingredient metadata (macros per 100g, density, aisle) used for nutrition + grocery calculations
 
 ## Extensibility
 

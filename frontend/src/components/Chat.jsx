@@ -18,6 +18,7 @@ export default function Chat() {
     }
   ]);
   const [recipe, setRecipe] = useState(null);
+  const [preloadedName, setPreloadedName] = useState(null);
   const [constraints, setConstraints] = useState({ dietary: [], allergies: [], dislikes: [], skill: null })
 
   // If navigated with a preloaded recipe (from Saved), show it immediately
@@ -25,6 +26,23 @@ export default function Chat() {
     const r = location.state?.recipe
     if (r) setRecipe(r)
   }, [location.state])
+
+  // If navigated from Explore with a recipe name, auto-fetch it once
+  useEffect(() => {
+    const targetName = location.state?.recipeName;
+    if (!targetName || targetName === preloadedName) return;
+    (async () => {
+      try {
+        setMessages((m) => [...m, { role: 'user', text: `recipe for ${targetName}` }]);
+        const data = await ask(`recipe for ${targetName}`, sessionId);
+        setMessages((m) => [...m, { role: 'assistant', text: data.reply || `Here's a recipe for ${targetName}.` }]);
+        if (data.recipe) setRecipe(data.recipe);
+        setPreloadedName(targetName);
+      } catch {
+        // on error, keep going
+      }
+    })();
+  }, [location.state?.recipeName, preloadedName, sessionId]);
 
   // Load user constraints for badges
   useEffect(() => {
