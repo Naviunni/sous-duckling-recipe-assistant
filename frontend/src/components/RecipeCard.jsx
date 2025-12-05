@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -8,16 +9,41 @@ import {
   ListItem,
   ListItemText,
   Avatar,
+  Button,
 } from '@mui/material';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 
 import { isSavedByName, saveRecipe, removeSavedByName } from '../utils/saved.jsx';
+import { upsertGroceryRecipe } from '../utils/api.jsx';
+import { getToken } from '../utils/auth.jsx';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import TextField from '@mui/material/TextField';
+import Stack from '@mui/material/Stack';
+import Divider from '@mui/material/Divider';
+import AddIcon from '@mui/icons-material/Add';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 export default function RecipeCard({ recipe }) {
   if (!recipe) return null;
 
   const [saved, setSaved] = useState(false);
+  const [listLoading, setListLoading] = useState(false);
+  const [listError, setListError] = useState(null);
+  const navigate = useNavigate();
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalError, setModalError] = useState(null);
+  const [itemsDraft, setItemsDraft] = useState(
+    (recipe?.ingredients || []).map((ing) => ({
+      name: ing.name || '',
+      quantity: ing.quantity || '',
+      unit: '',
+      aisle: '',
+    }))
+  );
 
   useEffect(() => {
     let active = true
@@ -32,6 +58,17 @@ export default function RecipeCard({ recipe }) {
     return () => { active = false }
   }, [recipe?.name])
 
+  useEffect(() => {
+    setItemsDraft(
+      (recipe?.ingredients || []).map((ing) => ({
+        name: ing.name || '',
+        quantity: ing.quantity || '',
+        unit: '',
+        aisle: '',
+      }))
+    )
+  }, [recipe])
+
   async function toggleSave() {
     try {
       if (saved) {
@@ -43,6 +80,29 @@ export default function RecipeCard({ recipe }) {
       }
     } catch (e) {
       // noop; in a real app, surface a toast
+    }
+  }
+
+  async function saveGroceryDraft() {
+    setModalError(null)
+    setListLoading(true)
+    const token = getToken()
+    if (!token) {
+      setModalError('Please sign in to save grocery lists.')
+      setListLoading(false)
+      return
+    }
+    try {
+      await upsertGroceryRecipe(token, {
+        name: recipe.name,
+        items: itemsDraft,
+      })
+      setModalOpen(false)
+      navigate('/grocery')
+    } catch (e) {
+      setModalError('Could not save grocery list. Please try again.')
+    } finally {
+      setListLoading(false)
     }
   }
 
@@ -96,18 +156,108 @@ export default function RecipeCard({ recipe }) {
           {recipe.name}
         </Typography>
 
-        <IconButton
-          onClick={toggleSave}
-          sx={{ color: saved ? 'error.main' : 'text.secondary' }}
-          title={saved ? 'Remove from saved' : 'Save recipe'}
-        >
-          {saved ? (
-            <FavoriteIcon sx={{ fontSize: 26 }} />
-          ) : (
-            <FavoriteBorderIcon sx={{ fontSize: 26 }} />
-          )}
-        </IconButton>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Button
+            variant="contained"
+            size="small"
+            disabled={listLoading}
+            onClick={() => setModalOpen(true)}
+            sx={{ fontWeight: 600 }}
+          >
+            {listLoading ? 'Working...' : 'Create grocery list'}
+          </Button>
+
+          <IconButton
+            onClick={toggleSave}
+            sx={{ color: saved ? 'error.main' : 'text.secondary' }}
+            title={saved ? 'Remove from saved' : 'Save recipe'}
+          >
+            {saved ? (
+              <FavoriteIcon sx={{ fontSize: 26 }} />
+            ) : (
+              <FavoriteBorderIcon sx={{ fontSize: 26 }} />
+            )}
+          </IconButton>
+        </Box>
       </Box>
+
+      {listError && (
+        <Typography variant="body2" color="error" sx={{ mb: 1 }}>
+          {listError}
+        </Typography>
+      )}
+
+      <Dialog open={modalOpen} onClose={() => setModalOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle>Edit grocery items for {recipe.name}</DialogTitle>
+        <DialogContent dividers>
+          <Stack spacing={2}>
+            {itemsDraft.map((item, idx) => (
+              <Box key={idx} sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr auto', gap: 1, alignItems: 'center' }}>
+                <TextField
+                  label="Item"
+                  size="small"
+                  value={item.name}
+                  onChange={(e) => {
+                    const next = [...itemsDraft]
+                    next[idx].name = e.target.value
+                    setItemsDraft(next)
+                  }}
+                />
+                <TextField
+                  label="Quantity"
+                  size="small"
+                  value={item.quantity}
+                  onChange={(e) => {
+                    const next = [...itemsDraft]
+                    next[idx].quantity = e.target.value
+                    setItemsDraft(next)
+                  }}
+                />
+                <TextField
+                  label="Unit"
+                  size="small"
+                  value={item.unit}
+                  onChange={(e) => {
+                    const next = [...itemsDraft]
+                    next[idx].unit = e.target.value
+                    setItemsDraft(next)
+                  }}
+                />
+                <TextField
+                  label="Aisle"
+                  size="small"
+                  value={item.aisle}
+                  onChange={(e) => {
+                    const next = [...itemsDraft]
+                    next[idx].aisle = e.target.value
+                    setItemsDraft(next)
+                  }}
+                />
+                <IconButton onClick={() => {
+                  setItemsDraft(itemsDraft.filter((_, i) => i !== idx))
+                }}>
+                  <DeleteIcon />
+                </IconButton>
+              </Box>
+            ))}
+            <Button
+              startIcon={<AddIcon />}
+              onClick={() => setItemsDraft([...itemsDraft, { name: '', quantity: '', unit: '', aisle: '' }])}
+              variant="outlined"
+              size="small"
+            >
+              Add item
+            </Button>
+            {modalError && <Typography color="error">{modalError}</Typography>}
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setModalOpen(false)}>Cancel</Button>
+          <Button variant="contained" onClick={saveGroceryDraft} disabled={listLoading}>
+            {listLoading ? 'Saving...' : 'Save to grocery list'}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Nutrition */}
       <Box sx={{ mb: 3 }}>

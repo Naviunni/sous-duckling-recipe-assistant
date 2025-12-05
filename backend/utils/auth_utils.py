@@ -5,6 +5,7 @@ import base64
 import secrets
 import hashlib
 from uuid import UUID
+from typing import Optional
 
 from dotenv import load_dotenv
 
@@ -53,7 +54,7 @@ def make_token(user_id: UUID) -> str:
     return base64.urlsafe_b64encode(blob).decode().rstrip("=")
 
 
-def verify_token(token: str) -> UUID | None:
+def verify_token(token: str) -> Optional[UUID]:
     """Verify HMAC token and return user_id if valid, else None."""
     if not token:
         return None

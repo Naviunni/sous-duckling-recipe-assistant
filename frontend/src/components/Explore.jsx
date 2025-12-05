@@ -12,6 +12,7 @@ import Rating from '@mui/material/Rating';
 import Typography from '@mui/material/Typography';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import { styled } from '@mui/material/styles';
+import { useNavigate } from 'react-router-dom';
 
 const cardData = [
   {
@@ -130,9 +131,15 @@ export function Search() {
 
 export default function Explore() {
   const [focusedCardIndex, setFocusedCardIndex] = React.useState(null);
+  const navigate = useNavigate();
 
   const handleFocus = (index) => {
     setFocusedCardIndex(index);
+  };
+
+  const handleCardClick = (title) => {
+    if (!title) return;
+    navigate('/chat', { state: { recipeName: title } });
   };
 
   const handleBlur = () => {
@@ -257,6 +264,7 @@ export default function Explore() {
             onBlur={handleBlur}
             tabIndex={0}
             className={focusedCardIndex === 0 ? 'Mui-focused' : ''}
+            onClick={() => handleCardClick(cardData[0].title)}
           >
             <CardMedia
               component="img"
@@ -294,6 +302,7 @@ export default function Explore() {
             onBlur={handleBlur}
             tabIndex={0}
             className={focusedCardIndex === 1 ? 'Mui-focused' : ''}
+            onClick={() => handleCardClick(cardData[1].title)}
           >
             <CardMedia
               component="img"
@@ -332,6 +341,7 @@ export default function Explore() {
             tabIndex={0}
             className={focusedCardIndex === 2 ? 'Mui-focused' : ''}
             sx={{ height: '100%' }}
+            onClick={() => handleCardClick(cardData[2].title)}
           >
             <CardMedia
               component="img"
@@ -369,6 +379,7 @@ export default function Explore() {
             tabIndex={0}
             className={focusedCardIndex === 3 ? 'Mui-focused' : ''}
             sx={{ height: '100%' }}
+            onClick={() => handleCardClick(cardData[3].title)}
           >
             <CardMedia
               component="img"
@@ -406,6 +417,7 @@ export default function Explore() {
             tabIndex={0}
             className={focusedCardIndex === 4 ? 'Mui-focused' : ''}
             sx={{ height: '100%' }}
+            onClick={() => handleCardClick(cardData[4].title)}
           >
             <CardMedia
               component="img"

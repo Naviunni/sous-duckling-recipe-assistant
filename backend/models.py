@@ -19,6 +19,7 @@ class User(Base):
     # Relationships (good to define now, even if not used yet)
     profile = relationship("UserProfile", back_populates="user", uselist=False, cascade="all, delete-orphan")
     recipes = relationship("SavedRecipe", back_populates="user", cascade="all, delete-orphan")
+    grocery_list = relationship("GroceryList", back_populates="user", uselist=False, cascade="all, delete-orphan")
 
 # Table 2: user_profiles
 class UserProfile(Base):
@@ -44,3 +45,14 @@ class SavedRecipe(Base):
     saved_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
     
     user = relationship("User", back_populates="recipes")
+
+
+class GroceryList(Base):
+    __tablename__ = "grocery_lists"
+
+    list_id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"), nullable=False, unique=True)
+    list_data = Column(JSONB, nullable=False)
+    updated_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
+
+    user = relationship("User", back_populates="grocery_list")

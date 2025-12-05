@@ -132,3 +132,62 @@ export async function loadRecipeToChat(sessionId, recipe) {
   if (!res.ok) throw new Error(data?.detail || `load chat failed: ${res.status}`)
   return data
 }
+
+export async function getMyGrocery(token) {
+  const res = await fetch(`${API_BASE}/me/grocery`, {
+    headers: { 'Authorization': `Bearer ${token}` },
+  })
+  const data = await res.json().catch(() => ({ aggregated: { items: [] }, recipes: [] }))
+  if (!res.ok) throw new Error(data?.detail || `get grocery failed: ${res.status}`)
+  return data
+}
+
+export async function upsertGroceryRecipe(token, recipePayload) {
+  const res = await fetch(`${API_BASE}/me/grocery/recipe`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify(recipePayload),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data?.detail || `save grocery recipe failed: ${res.status}`)
+  return data
+}
+
+export async function removeGroceryRecipe(token, name) {
+  const res = await fetch(`${API_BASE}/me/grocery/recipe?name=${encodeURIComponent(name)}`, {
+    method: 'DELETE',
+    headers: { 'Authorization': `Bearer ${token}` },
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data?.detail || `delete grocery recipe failed: ${res.status}`)
+  return data
+}
+
+export async function updateGroceryItem(token, payload) {
+  const res = await fetch(`${API_BASE}/me/grocery/item`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data?.detail || `update grocery item failed: ${res.status}`)
+  return data
+}
+
+export async function deleteMyGrocery(token) {
+  const res = await fetch(`${API_BASE}/me/grocery`, {
+    method: 'DELETE',
+    headers: { 'Authorization': `Bearer ${token}` },
+  })
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}))
+    throw new Error(data?.detail || `delete grocery failed: ${res.status}`)
+  }
+  return { ok: true }
+}

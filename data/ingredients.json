@@ -1,0 +1,146 @@
+{
+  "milk": {
+    "per_100g": { "calories": 60, "protein": 3.3, "carbs": 5, "fat": 3.2, "fiber": 0 },
+    "density_g_per_cup": 240,
+    "aisle": "Dairy",
+    "aliases": ["whole milk", "oat milk", "almond milk", "soy milk"]
+  },
+  "all-purpose flour": {
+    "per_100g": { "calories": 364, "protein": 10, "carbs": 76, "fat": 1, "fiber": 3 },
+    "density_g_per_cup": 120,
+    "aisle": "Baking",
+    "aliases": ["flour", "ap flour"]
+  },
+  "sugar": {
+    "per_100g": { "calories": 387, "protein": 0, "carbs": 100, "fat": 0, "fiber": 0 },
+    "density_g_per_cup": 200,
+    "aisle": "Baking",
+    "aliases": ["granulated sugar", "white sugar"]
+  },
+  "brown sugar": {
+    "per_100g": { "calories": 380, "protein": 0, "carbs": 98, "fat": 0, "fiber": 0 },
+    "density_g_per_cup": 220,
+    "aisle": "Baking",
+    "aliases": ["light brown sugar", "dark brown sugar"]
+  },
+  "butter": {
+    "per_100g": { "calories": 717, "protein": 1, "carbs": 0, "fat": 81, "fiber": 0 },
+    "density_g_per_cup": 227,
+    "aisle": "Dairy",
+    "aliases": ["unsalted butter", "salted butter"]
+  },
+  "egg": {
+    "per_100g": { "calories": 143, "protein": 13, "carbs": 1.1, "fat": 10, "fiber": 0 },
+    "count_g": 50,
+    "aisle": "Dairy",
+    "aliases": ["eggs", "large egg"]
+  },
+  "olive oil": {
+    "per_100g": { "calories": 884, "protein": 0, "carbs": 0, "fat": 100, "fiber": 0 },
+    "density_g_per_cup": 218,
+    "aisle": "Oils",
+    "aliases": ["extra virgin olive oil", "evoo"]
+  },
+  "vegetable oil": {
+    "per_100g": { "calories": 884, "protein": 0, "carbs": 0, "fat": 100, "fiber": 0 },
+    "density_g_per_cup": 218,
+    "aisle": "Oils",
+    "aliases": ["canola oil"]
+  },
+  "chicken breast": {
+    "per_100g": { "calories": 165, "protein": 31, "carbs": 0, "fat": 3.6, "fiber": 0 },
+    "density_g_per_cup": 140,
+    "aisle": "Meat",
+    "aliases": ["chicken", "chicken breasts", "chicken thigh"]
+  },
+  "ground beef": {
+    "per_100g": { "calories": 250, "protein": 26, "carbs": 0, "fat": 17, "fiber": 0 },
+    "density_g_per_cup": 225,
+    "aisle": "Meat",
+    "aliases": ["minced beef", "beef"]
+  },
+  "tomato": {
+    "per_100g": { "calories": 18, "protein": 0.9, "carbs": 3.9, "fat": 0.2, "fiber": 1.2 },
+    "density_g_per_cup": 180,
+    "aisle": "Produce",
+    "aliases": ["tomatoes", "roma tomato", "cherry tomato"]
+  },
+  "onion": {
+    "per_100g": { "calories": 40, "protein": 1.1, "carbs": 9.3, "fat": 0.1, "fiber": 1.7 },
+    "density_g_per_cup": 160,
+    "aisle": "Produce",
+    "aliases": ["yellow onion", "red onion", "white onion"]
+  },
+  "garlic": {
+    "per_100g": { "calories": 149, "protein": 6.4, "carbs": 33, "fat": 0.5, "fiber": 2.1 },
+    "count_g": 3,
+    "aisle": "Produce",
+    "aliases": ["garlic clove", "garlic cloves"]
+  },
+  "mushroom": {
+    "per_100g": { "calories": 22, "protein": 3.1, "carbs": 3.3, "fat": 0.3, "fiber": 1 },
+    "density_g_per_cup": 72,
+    "aisle": "Produce",
+    "aliases": ["mushrooms", "button mushroom", "cremini mushroom"]
+  },
+  "pasta": {
+    "per_100g": { "calories": 131, "protein": 5, "carbs": 25, "fat": 1.1, "fiber": 1.3 },
+    "density_g_per_cup": 98,
+    "aisle": "Pasta",
+    "aliases": ["spaghetti", "penne", "lasagna noodles"]
+  },
+  "rice": {
+    "per_100g": { "calories": 130, "protein": 2.7, "carbs": 28, "fat": 0.3, "fiber": 0.4 },
+    "density_g_per_cup": 185,
+    "aisle": "Grains",
+    "aliases": ["white rice", "brown rice", "basmati rice"]
+  },
+  "mozzarella cheese": {
+    "per_100g": { "calories": 280, "protein": 28, "carbs": 3, "fat": 17, "fiber": 0 },
+    "density_g_per_cup": 112,
+    "aisle": "Dairy",
+    "aliases": ["mozzarella"]
+  },
+  "ricotta cheese": {
+    "per_100g": { "calories": 174, "protein": 11, "carbs": 3, "fat": 13, "fiber": 0 },
+    "density_g_per_cup": 246,
+    "aisle": "Dairy",
+    "aliases": ["ricotta"]
+  },
+  "bell pepper": {
+    "per_100g": { "calories": 31, "protein": 1, "carbs": 6, "fat": 0.3, "fiber": 2.1 },
+    "density_g_per_cup": 150,
+    "aisle": "Produce",
+    "aliases": ["red bell pepper", "green bell pepper"]
+  },
+  "oats": {
+    "per_100g": { "calories": 389, "protein": 17, "carbs": 66, "fat": 7, "fiber": 10 },
+    "density_g_per_cup": 90,
+    "aisle": "Grains",
+    "aliases": ["rolled oats", "old fashioned oats"]
+  },
+  "lentils": {
+    "per_100g": { "calories": 116, "protein": 9, "carbs": 20, "fat": 0.4, "fiber": 8 },
+    "density_g_per_cup": 192,
+    "aisle": "Grains",
+    "aliases": ["red lentils", "green lentils", "brown lentils"]
+  },
+  "cream": {
+    "per_100g": { "calories": 340, "protein": 2, "carbs": 3, "fat": 36, "fiber": 0 },
+    "density_g_per_cup": 240,
+    "aisle": "Dairy",
+    "aliases": ["heavy cream", "whipping cream"]
+  },
+  "cheddar cheese": {
+    "per_100g": { "calories": 403, "protein": 25, "carbs": 1.3, "fat": 33, "fiber": 0 },
+    "density_g_per_cup": 113,
+    "aisle": "Dairy",
+    "aliases": ["cheddar"]
+  },
+  "spinach": {
+    "per_100g": { "calories": 23, "protein": 2.9, "carbs": 3.6, "fat": 0.4, "fiber": 2.2 },
+    "density_g_per_cup": 30,
+    "aisle": "Produce",
+    "aliases": ["baby spinach"]
+  }
+}

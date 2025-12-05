@@ -8,7 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
 from .database import async_session
-from .models import User, UserProfile, SavedRecipe
+from .models import User, UserProfile, SavedRecipe, GroceryList
 from .utils.auth_utils import hash_password, verify_password, make_token, verify_token
 
 from .utils.logging_utils import get_logger
@@ -18,6 +18,8 @@ from . import substitution_engine as se
 from .llm_interface import ask_llm, generate_recipe, has_llm, modify_recipe
 from .intent_parser import parse_intent
 from .utils.recipe_utils import normalize_recipe
+from .utils.nutrition import annotate_recipe_nutrition
+from .utils.grocery import aggregate_grocery, merge_recipe, remove_recipe, apply_override
 
 
 logger = get_logger(__name__)
@@ -64,6 +66,73 @@ class SubstituteRequest(BaseModel):
 
 class SubstituteResponse(BaseModel):
     substitutes: List[str]
+
+
+class NutritionPreviewRequest(BaseModel):
+    recipe: Recipe
+
+
+class NutritionPreviewResponse(BaseModel):
+    nutrition: Dict[str, str]
+    unknown_items: Optional[List[str]] = None
+
+
+class GroceryRecipe(BaseModel):
+    name: str
+    ingredients: List[Ingredient]
+    steps: List[str]
+    nutrition: Optional[Dict[str, str]] = None
+    serving_size: Optional[str] = None
+
+
+class GroceryRequest(BaseModel):
+    recipes: List[GroceryRecipe]
+    pantry: Optional[List[str]] = None
+
+
+class GroceryItem(BaseModel):
+    name: str
+    quantity: Optional[str] = None
+    unit: Optional[str] = None
+    aisle: Optional[str] = None
+    recipes: Optional[List[str]] = None
+    unknown: Optional[bool] = None
+    key: Optional[str] = None
+
+
+class GroceryResponse(BaseModel):
+    items: List[GroceryItem]
+    recipes: Optional[List[str]] = None
+
+
+class GrocerySaveRequest(BaseModel):
+    items: List[GroceryItem]
+    recipes: Optional[List[str]] = None
+
+
+class GroceryRecipeItem(BaseModel):
+    name: str
+    quantity: Optional[str] = None
+    unit: Optional[str] = None
+    aisle: Optional[str] = None
+
+
+class GroceryRecipePayload(BaseModel):
+    name: str
+    items: List[GroceryRecipeItem]
+
+
+class GroceryFullResponse(BaseModel):
+    recipes: List[GroceryRecipePayload]
+    aggregated: GroceryResponse
+
+
+class GroceryItemOverride(BaseModel):
+    key: str
+    quantity: Optional[str] = None
+    unit: Optional[str] = None
+    aisle: Optional[str] = None
+    remove: Optional[bool] = None
 
 
 def _respond(session_id: str, reply: str, recipe: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -321,6 +390,101 @@ async def substitute(req: SubstituteRequest):
     return {"substitutes": subs}
 
 
+@app.post("/nutrition/preview", response_model=NutritionPreviewResponse)
+async def nutrition_preview(req: NutritionPreviewRequest):
+    data = annotate_recipe_nutrition(req.recipe.model_dump())
+    return {
+        "nutrition": data.get("nutrition") or {},
+        "unknown_items": data.get("nutrition_unknown_items") or None,
+    }
+
+
+@app.post("/grocery", response_model=GroceryResponse)
+async def grocery(req: GroceryRequest):
+    data = aggregate_grocery([r.model_dump() for r in req.recipes], pantry=req.pantry)
+    return data
+
+
+def _default_grocery_data() -> Dict[str, Any]:
+    return {"recipes": [], "overrides": {}}
+
+
+async def _load_grocery_data(user_id):
+    async with async_session() as db:
+        res = await db.execute(select(GroceryList).where(GroceryList.user_id == user_id))
+        row = res.scalar_one_or_none()
+        if not row or not row.list_data:
+            return _default_grocery_data()
+        return row.list_data
+
+
+async def _save_grocery_data(user_id, data: Dict[str, Any]):
+    async with async_session() as db:
+        res = await db.execute(select(GroceryList).where(GroceryList.user_id == user_id))
+        row = res.scalar_one_or_none()
+        if row:
+            row.list_data = data
+        else:
+            db.add(GroceryList(user_id=user_id, list_data=data))
+        await db.commit()
+
+
+@app.get("/me/grocery", response_model=GroceryFullResponse)
+async def get_my_grocery(request: Request):
+    user_id = _require_user_id(request)
+    data = await _load_grocery_data(user_id)
+    aggregated = aggregate_grocery(data.get("recipes", []), overrides=data.get("overrides", {}))
+    aggregated["recipes"] = [r.get("name") for r in data.get("recipes", [])]
+    return {"recipes": data.get("recipes", []), "aggregated": aggregated}
+
+
+@app.post("/me/grocery/recipe", response_model=GroceryFullResponse)
+async def upsert_grocery_recipe(req: GroceryRecipePayload, request: Request):
+    user_id = _require_user_id(request)
+    current = await _load_grocery_data(user_id)
+    updated = merge_recipe(current, req.model_dump())
+    await _save_grocery_data(user_id, updated)
+    aggregated = aggregate_grocery(updated.get("recipes", []), overrides=updated.get("overrides", {}))
+    aggregated["recipes"] = [r.get("name") for r in updated.get("recipes", [])]
+    return {"recipes": updated.get("recipes", []), "aggregated": aggregated}
+
+
+@app.delete("/me/grocery/recipe")
+async def delete_grocery_recipe(name: str, request: Request):
+    user_id = _require_user_id(request)
+    current = await _load_grocery_data(user_id)
+    updated = remove_recipe(current, name)
+    await _save_grocery_data(user_id, updated)
+    aggregated = aggregate_grocery(updated.get("recipes", []), overrides=updated.get("overrides", {}))
+    aggregated["recipes"] = [r.get("name") for r in updated.get("recipes", [])]
+    return {"recipes": updated.get("recipes", []), "aggregated": aggregated}
+
+
+@app.patch("/me/grocery/item", response_model=GroceryFullResponse)
+async def override_grocery_item(payload: GroceryItemOverride, request: Request):
+    user_id = _require_user_id(request)
+    current = await _load_grocery_data(user_id)
+    from .utils.grocery import _maybe_strip  # reuse normalization helper
+    key = _maybe_strip(payload.key).lower()
+    updated = apply_override(current, key, payload.model_dump(exclude_none=True))
+    await _save_grocery_data(user_id, updated)
+    aggregated = aggregate_grocery(updated.get("recipes", []), overrides=updated.get("overrides", {}))
+    aggregated["recipes"] = [r.get("name") for r in updated.get("recipes", [])]
+    return {"recipes": updated.get("recipes", []), "aggregated": aggregated}
+
+
+@app.delete("/me/grocery")
+async def delete_my_grocery(request: Request):
+    user_id = _require_user_id(request)
+    async with async_session() as db:
+        res = await db.execute(select(GroceryList).where(GroceryList.user_id == user_id))
+        row = res.scalar_one_or_none()
+        if row:
+            await db.delete(row)
+            await db.commit()
+    return {"ok": True}
+
+
 
 
 @app.post("/ask", response_model=AskResponse)
@@ -385,6 +549,7 @@ async def ask(req: AskRequest, request: Request):
                 history,
             )
         )
+        updated = annotate_recipe_nutrition(updated)
         ctx.set_current_recipe(session_id, updated)
         if replacements:
             first = replacements[0]
@@ -403,6 +568,7 @@ async def ask(req: AskRequest, request: Request):
                 regenerated = normalize_recipe(
                     modify_recipe(current, list(ctx.get_dislikes(session_id)), None, dietary, skill_level, history)
                 )
+                regenerated = annotate_recipe_nutrition(regenerated)
                 ctx.set_current_recipe(session_id, regenerated)
                 reply = "Regenerated the recipe based on your dislikes."
                 return _respond(session_id, reply, regenerated)
@@ -419,6 +585,7 @@ async def ask(req: AskRequest, request: Request):
                 history,
             )
         )
+        generated = annotate_recipe_nutrition(generated)
         ctx.set_current_recipe(session_id, generated)
         reply = f"Here's a recipe for {generated.get('name', rn)}."
         return _respond(session_id, reply, generated)
